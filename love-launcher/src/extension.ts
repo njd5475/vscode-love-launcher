@@ -55,7 +55,8 @@ export function activate(context: vscode.ExtensionContext) {
 				let loveExecDir: string = vscode.workspace.getConfiguration('lövelauncher').get('path') || '.';
 				let loveExecName: string = vscode.workspace.getConfiguration('lövelauncher').get('execName') || 'love';
 				let useConsoleSubsystem: boolean = Boolean(vscode.workspace.getConfiguration('lövelauncher').get('useConsoleSubsystem'));
-				let saveAllOnLaunch: boolean = Boolean(vscode.workspace.getConfiguration('lövelauncher').get('saveAllOnLaunch'));
+				let saveAllOnLaunch: boolean = Boolean(vscode.workspace.getConfiguration('lövelauncher').get('saveAllOnLaunch'));				
+				let useTerminal: boolean = Boolean(vscode.workspace.getConfiguration('lövelauncher').get('launchInTerminal'));
 
 				if (saveAllOnLaunch) {
 					vscode.workspace.saveAll();
@@ -72,19 +73,38 @@ export function activate(context: vscode.ExtensionContext) {
 				let process = null;
 
 				let loveExecutable = path.join(loveExecDir, loveExecName);
-				if (os.platform() === 'win32') {
+				let command = `${loveExecutable} ${gameDir}`;
+
+				if (os.platform() === 'win32') 
+				{
 					if (!useConsoleSubsystem) {
 						process = cp.spawn(loveExecutable, [gameDir]);
-						currentInstances[Number(process.pid)] = process;
 					} else {
 						process = cp.spawn(loveExecutable, [gameDir, "--console"]);
-						currentInstances[Number(process.pid)] = process;
 					}
-				}else if (os.platform() === 'macosx') {
-					process = cp.exec(`open -n -a ${loveExecName} ${gameDir}`);
-					currentInstances[Number(process.pid)] = process;
-				}else {
-					process = cp.exec(`${loveExecutable} ${gameDir}`);
+				}
+				else if (os.platform() === 'macosx') 
+				{
+					command = `open -n -a ${loveExecName} ${gameDir}`;
+					if(useTerminal) {
+						const terminal = vscode.window.createTerminal(`löve Terminal ${path.basename(workspaceFolder?.uri.fsPath || path.resolve('.'))}`);
+						terminal.sendText(command);
+					}else{
+						process = cp.exec(command);
+					}
+				}
+				else 
+				{
+					if(useTerminal) {
+						const terminal = vscode.window.createTerminal(`löve Terminal ${path.basename(workspaceFolder?.uri.fsPath || path.resolve('.'))}`);
+						terminal.sendText(`${loveExecutable} ${gameDir}`);
+					}else{
+						process = cp.exec(`${loveExecutable} ${gameDir}`);
+						
+					}
+				}
+
+				if(process) {
 					currentInstances[Number(process.pid)] = process;
 				}
 			} else {

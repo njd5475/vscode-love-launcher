@@ -75,6 +75,11 @@
           "type": "string",
           "description": "Is there another script that you use to identify your love applications?",
           "default": "main.lua"
+        },
+        "lövelauncher.launchInTerminal": {
+          "type": "boolean",
+          "description": "Should the launched instance of löve be executed in a new terminal session?",
+          "default": false
         }
       }
     }
